@@ -4,8 +4,10 @@ export async function POST(req: Request) {
   try {
     const { message } = await req.json();
 
-    if (!message) {
-      return NextResponse.json({ reply: "Empty message" });
+    if (!message || typeof message !== "string") {
+      return NextResponse.json({
+        reply: "Please enter a valid question.",
+      });
     }
 
     const response = await fetch(
@@ -18,11 +20,28 @@ export async function POST(req: Request) {
         },
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
+          temperature: 0.2,
+          max_tokens: 180,
           messages: [
             {
               role: "system",
               content:
-                "You are an AI assistant for a realtime bracket syntax validator. Explain stack-based validation, mismatched brackets, and error fixing clearly.",
+                "You are an AI assistant for a Realtime Bracket Syntax Validator.\n" +
+                "Rules:\n" +
+                "- Do not use markdown formatting\n" +
+                "- Keep answers short and structured\n" +
+                "- Use numbered steps only\n" +
+                "- Maximum six lines\n" +
+                "- No long paragraphs\n" +
+                "Topics:\n" +
+                "- Stack based bracket validation\n" +
+                "- Mismatched, stray, unbalanced brackets\n" +
+                "- Python, C, C++, Java explanations\n" +
+                "- Error fixing guidance\n" +
+                "Format:\n" +
+                "Title:\n" +
+                "Steps:\n" +
+                "Example:",
             },
             {
               role: "user",
@@ -35,17 +54,22 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
-    console.log("GROQ RAW RESPONSE 👉", data);
+    let reply =
+      data?.choices?.[0]?.message?.content ||
+      "No response from AI.";
 
-    return NextResponse.json({
-      reply:
-        data?.choices?.[0]?.message?.content ||
-        "Groq returned no content",
-    });
+    // Cleanup for UI safety
+    reply = reply
+      .replace(/\*\*/g, "")
+      .replace(/###/g, "")
+      .replace(/\n{2,}/g, "\n")
+      .trim();
+
+    return NextResponse.json({ reply });
   } catch (error) {
     console.error("Groq API error:", error);
     return NextResponse.json(
-      { reply: "AI service error" },
+      { reply: "AI service error. Please try again." },
       { status: 500 }
     );
   }

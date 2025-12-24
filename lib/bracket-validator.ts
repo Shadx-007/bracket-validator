@@ -22,19 +22,32 @@ const BRACKETS: Record<string, string> = {
 const OPEN = Object.keys(BRACKETS)
 const CLOSE = Object.values(BRACKETS)
 
-const COMMENT_RULES = {
-  c: [/\/\/.*$/, /\/\*[\s\S]*?\*\//],
-  cpp: [/\/\/.*$/, /\/\*[\s\S]*?\*\//],
-  java: [/\/\/.*$/, /\/\*[\s\S]*?\*\//],
-  python: [/#.*$/],
+const COMMENT_RULES: Record<
+  "c" | "cpp" | "java" | "python",
+  RegExp[]
+> = {
+  c: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//gm],
+  cpp: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//gm],
+  java: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//gm],
+  python: [/#.*$/gm],
 }
 
 export function validateBrackets(
   code: string,
-  language: "c" | "cpp" | "java" | "python"
+  language: "c" | "cpp" | "java" | "python" = "cpp"
 ) {
+  if (typeof code !== "string") {
+    return {
+      isValid: true,
+      errors: [],
+      stackSnapshot: [],
+    }
+  }
+
   let cleaned = code
-  COMMENT_RULES[language].forEach((r) => {
+  const rules = COMMENT_RULES[language] ?? []
+
+  rules.forEach((r) => {
     cleaned = cleaned.replace(r, "")
   })
 
@@ -51,9 +64,7 @@ export function validateBrackets(
 
       if (OPEN.includes(ch)) {
         stack.push({ char: ch, line: lineNo, column: colNo })
-      }
-
-      if (CLOSE.includes(ch)) {
+      } else if (CLOSE.includes(ch)) {
         if (stack.length === 0) {
           errors.push({
             type: "stray_closing",
