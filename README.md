@@ -1,5 +1,3 @@
-﻿# flash-heckton
-
  # Application Architecture
 
 ## Overview
@@ -163,4 +161,5 @@ Global Navigation (available on all pages except login/signup)
 - Implement real-time collaboration features
 - Add code sharing and export functionality
 - Enhanced analytics and reporting on dashboard
+
 
